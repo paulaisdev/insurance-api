@@ -9,9 +9,12 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ParcelaMapper {
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "dataCriacao", expression = "java(java.time.LocalDate.now())")
     Parcela toEntity(ParcelaDTO dto);
 
+    @Mapping(target = "dataCriacao", source = "dataCriacao")
+    @Mapping(target = "dataAlteracao", source = "dataAlteracao")
+    @Mapping(target = "usuarioCriacao", source = "usuarioCriacao")
+    @Mapping(target = "usuarioAlteracao", source = "usuarioAlteracao")
     ParcelaDTO toDTO(Parcela entity);
 }
