@@ -1,4 +1,4 @@
-package com.insurance.api.service;
+package com.insurance.api.service.csv;
 
 import com.insurance.api.messaging.CsvProducer;
 import org.slf4j.Logger;
