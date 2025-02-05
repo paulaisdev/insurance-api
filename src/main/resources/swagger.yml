@@ -1,0 +1,187 @@
+openapi: 3.0.0
+info:
+  title: Insurance API
+  description: API para gerenciamento de apólices de seguro, permitindo criar, consultar, alterar e pagar parcelas.
+  version: 1.0.0
+  contact:
+    name: Suporte Insurance API
+    email: suporte@insurance.com
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desenvolvimento local
+
+paths:
+  /apolices:
+    get:
+      summary: Lista todas as apólices cadastradas
+      tags:
+        - Apólices
+      responses:
+        "200":
+          description: Lista de apólices retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApoliceDTO"
+
+    post:
+      summary: Cria uma nova apólice de seguro
+      tags:
+        - Apólices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApoliceDTO"
+      responses:
+        "201":
+          description: Apólice criada com sucesso
+        "400":
+          description: Erro na requisição
+
+  /apolices/{id}:
+    get:
+      summary: Busca uma apólice pelo ID
+      tags:
+        - Apólices
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Detalhes da apólice encontrados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApoliceDTO"
+        "404":
+          description: Apólice não encontrada
+
+    put:
+      summary: Atualiza uma apólice existente
+      tags:
+        - Apólices
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApoliceDTO"
+      responses:
+        "200":
+          description: Apólice atualizada com sucesso
+        "400":
+          description: Erro na requisição
+        "404":
+          description: Apólice não encontrada
+
+  /parcelas/{id}/pagar:
+    patch:
+      summary: Efetua o pagamento de uma parcela
+      tags:
+        - Parcelas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: formaPagamento
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CARTAO, BOLETO, DINHEIRO]
+      responses:
+        "200":
+          description: Pagamento realizado com sucesso
+        "400":
+          description: Erro na requisição
+        "404":
+          description: Parcela não encontrada
+
+  /kafka/pagamento:
+    post:
+      summary: Envia um pagamento para a fila Kafka
+      tags:
+        - Kafka
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+      responses:
+        "200":
+          description: Mensagem enviada ao Kafka com sucesso
+        "400":
+          description: Erro na requisição
+
+components:
+  schemas:
+    ApoliceDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        descricao:
+          type: string
+          example: "APOLICE TESTE"
+        cpf:
+          type: string
+          example: "22222222222"
+        situacao:
+          type: string
+          example: "ATIVA"
+        premioTotal:
+          type: number
+          format: double
+          example: 2000.0
+        parcelas:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParcelaDTO"
+
+    ParcelaDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        premio:
+          type: number
+          format: double
+          example: 1000.0
+        formaPagamento:
+          type: string
+          example: "CARTAO"
+        dataPagamento:
+          type: string
+          format: date
+          example: "2025-02-06"
+        dataPago:
+          type: string
+          format: date
+          example: "2025-02-07"
+        juros:
+          type: number
+          format: double
+          example: 30.0
+        situacao:
+          type: string
+          example: "PAGO"
