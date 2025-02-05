@@ -19,7 +19,7 @@ public class Apolice {
     private Integer usuarioCriacao;
     private Integer usuarioAlteracao;
 
-    @OneToMany(mappedBy = "apolice", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "apolice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Parcela> parcelas;
 
     public Apolice() {}
