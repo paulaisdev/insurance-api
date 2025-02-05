@@ -22,6 +22,10 @@ public class CsvProcessorService {
     }
 
     public void processarCsv(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("O arquivo CSV está vazio.");
+        }
+
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
@@ -31,8 +35,9 @@ public class CsvProcessorService {
             logger.info("Arquivo CSV enviado para processamento assíncrono. TransactionID: {}", transactionId);
 
         } catch (Exception e) {
-            logger.error("Erro ao processar CSV: {}", e.getMessage());
+            logger.error("Erro ao processar CSV: {}", e.getMessage(), e);
             throw new RuntimeException("Erro ao processar o arquivo CSV.");
         }
     }
 }
+
