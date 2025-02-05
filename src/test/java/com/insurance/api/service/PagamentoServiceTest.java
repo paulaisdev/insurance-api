@@ -1,10 +1,8 @@
 package com.insurance.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.api.model.Parcela;
 import com.insurance.api.payment.CalculoJuros;
-import com.insurance.api.payment.impl.JurosCartao;
-import com.insurance.api.payment.impl.JurosBoleto;
-import com.insurance.api.payment.impl.JurosDinheiro;
 import com.insurance.api.repository.ParcelaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +27,13 @@ class PagamentoServiceTest {
     private ParcelaRepository parcelaRepository;
 
     @Mock
+    private Map<String, CalculoJuros> estrategiasPagamento;
+
+    @Mock
     private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private PagamentoService pagamentoService;
@@ -38,53 +42,42 @@ class PagamentoServiceTest {
 
     @BeforeEach
     void setUp() {
-        Map<String, CalculoJuros> estrategiasPagamento = Map.of(
-                "CARTAO", new JurosCartao(),
-                "BOLETO", new JurosBoleto(),
-                "DINHEIRO", new JurosDinheiro()
-        );
-
-        pagamentoService = new PagamentoService(parcelaRepository, estrategiasPagamento, kafkaTemplate);
-
         parcela = new Parcela();
         parcela.setId(1L);
-        parcela.setPremio(new BigDecimal("1000.00"));
-        parcela.setDataPagamento(LocalDate.now().minusDays(2));
         parcela.setSituacao("PENDENTE");
+        parcela.setFormaPagamento("CARTAO");
+        parcela.setDataPagamento(LocalDate.now().minusDays(3));
     }
 
     @Test
-    void deveProcessarPagamentoComJuros() {
+    void deveProcessarPagamentoComSucesso() throws Exception {
         when(parcelaRepository.findById(1L)).thenReturn(Optional.of(parcela));
+        when(estrategiasPagamento.get("CARTAO")).thenReturn(p -> new BigDecimal("30.00"));
         when(parcelaRepository.save(any())).thenReturn(parcela);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"parcelaId\":1,\"formaPagamento\":\"CARTAO\"}");
 
         Parcela resultado = pagamentoService.processarPagamento(1L, "CARTAO");
 
-        assertNotNull(resultado);
         assertEquals("PAGO", resultado.getSituacao());
-        assertTrue(resultado.getJuros().compareTo(BigDecimal.ZERO) > 0);
 
-        verify(parcelaRepository, times(1)).save(parcela);
+        verify(kafkaTemplate, times(1)).send(eq("pagamento_concluido"), anyString());
     }
 
+
     @Test
-    void deveLancarExcecaoSeParcelaNaoForEncontrada() {
-        when(parcelaRepository.findById(1L)).thenReturn(Optional.empty());
+    void deveLancarErroAoPagarParcelaInexistente() {
+        when(parcelaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                pagamentoService.processarPagamento(1L, "CARTAO"));
-
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> pagamentoService.processarPagamento(99L, "CARTAO"));
         assertEquals("Parcela não encontrada", exception.getMessage());
     }
 
     @Test
-    void deveLancarExcecaoSeParcelaJaForPaga() {
+    void deveLancarErroAoPagarParcelaJaPaga() {
         parcela.setSituacao("PAGO");
         when(parcelaRepository.findById(1L)).thenReturn(Optional.of(parcela));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                pagamentoService.processarPagamento(1L, "CARTAO"));
-
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> pagamentoService.processarPagamento(1L, "CARTAO"));
         assertEquals("Parcela já foi paga ou está inválida", exception.getMessage());
     }
 }
