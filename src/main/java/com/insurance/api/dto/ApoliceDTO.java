@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -25,6 +26,14 @@ public class ApoliceDTO {
     @NotNull(message = "Prêmio total é obrigatório")
     @Positive(message = "Prêmio total deve ser positivo")
     private BigDecimal premioTotal;
+
+    private LocalDate dataCriacao;
+
+    private LocalDate dataAlteracao;
+
+    private Integer usuarioCriacao;
+
+    private Integer usuarioAlteracao;
 
     private List<ParcelaDTO> parcelas;
 }
