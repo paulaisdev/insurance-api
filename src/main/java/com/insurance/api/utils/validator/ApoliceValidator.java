@@ -1,26 +1,27 @@
-package com.insurance.api.service.csv.validator;
+package com.insurance.api.utils.validator;
 
-import java.util.regex.Pattern;
+import jakarta.validation.ValidationException;
+import java.math.BigDecimal;
 
 public class ApoliceValidator {
 
-    private static final Pattern CPF_PATTERN = Pattern.compile("\\d{11}"); // CPF deve ter 11 dígitos numéricos
-
     public static void validarCpf(String cpf) {
-        if (!CPF_PATTERN.matcher(cpf).matches()) {
-            throw new IllegalArgumentException("CPF inválido: " + cpf);
+        if (cpf == null || !cpf.matches("\\d{11}")) {
+            throw new ValidationException("CPF inválido: " + cpf);
         }
     }
 
     public static void validarSituacao(String situacao) {
-        if (!situacao.equalsIgnoreCase("ATIVA") && !situacao.equalsIgnoreCase("CANCELADA")) {
-            throw new IllegalArgumentException("Situação inválida: " + situacao);
+        if (!"ATIVA".equals(situacao) && !"CANCELADA".equals(situacao)) {
+            throw new ValidationException("Situação inválida: " + situacao);
         }
     }
 
-    public static void validarCamposObrigatorios(String[] dados) {
-        if (dados.length < 5) {
-            throw new IllegalArgumentException("Campos ausentes na linha CSV.");
+    public static BigDecimal converterPremio(String premio) {
+        try {
+            return new BigDecimal(premio.trim().replace(",", "."));
+        } catch (NumberFormatException e) {
+            throw new ValidationException("Erro ao converter premioTotal: " + premio);
         }
     }
 }
