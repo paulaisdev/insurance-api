@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "d10cd964-aa79-4187-8572-b67c2a25e2a0",
+		"name": "Insurance API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30032877"
+	},
+	"item": [
+		{
+			"name": "Criar Apólice",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"descricao\": \"APOLICE TESTE\",\n  \"cpf\": \"22222222222\",\n  \"situacao\": \"ATIVA\",\n  \"premioTotal\": 1500.0,\n  \"parcelas\": [\n    {\n      \"premio\": 750.0,\n      \"formaPagamento\": \"BOLETO\",\n      \"dataPagamento\": \"2025-02-06\"\n    },\n    {\n      \"premio\": 750.0,\n      \"formaPagamento\": \"CARTAO\",\n      \"dataPagamento\": \"2025-03-06\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/apolices",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"apolices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar todas as Apólices",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/apolices/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"apolices",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Apólice por ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/apolices/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"apolices",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Pagar Parcela",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "formaPagamento",
+						"value": "CARTAO",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/parcelas/1/processar-pagamento?formaPagamento=DINHEIRO",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"parcelas",
+						"1",
+						"processar-pagamento"
+					],
+					"query": [
+						{
+							"key": "formaPagamento",
+							"value": "DINHEIRO"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Alterar Apólice",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 2,\n  \"descricao\": \"APOLICE ATUALIZADA\",\n  \"cpf\": \"22222222222\",\n  \"situacao\": \"ATIVA\",\n  \"premioTotal\": 1500.0,\n  \"parcelas\": [\n    {\n      \"id\": 1,\n      \"premio\": 750.0,\n      \"formaPagamento\": \"BOLETO\",\n      \"dataPagamento\": \"2025-02-06\",\n      \"situacao\": \"PENDENTE\"\n    },\n    {\n      \"id\": 2,\n      \"premio\":750.0,\n      \"formaPagamento\": \"CARTAO\",\n      \"dataPagamento\": \"2025-03-06\",\n      \"situacao\": \"PENDENTE\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/apolices/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"apolices",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload CSV",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/paulaallemand/Downloads/exemplo_apolices.csv"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/csv/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"csv",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
