@@ -3,10 +3,12 @@ package com.insurance.api.service;
 import com.insurance.api.model.Parcela;
 import com.insurance.api.payment.CalculoJuros;
 import com.insurance.api.repository.ParcelaRepository;
+import com.insurance.api.utils.validator.ParcelaValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,32 +21,32 @@ public class PagamentoService {
     private final ParcelaRepository parcelaRepository;
     private final Map<String, CalculoJuros> estrategiasPagamento;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public PagamentoService(ParcelaRepository parcelaRepository, Map<String, CalculoJuros> estrategiasPagamento, KafkaTemplate<String, String> kafkaTemplate) {
+    public PagamentoService(ParcelaRepository parcelaRepository, Map<String, CalculoJuros> estrategiasPagamento,
+                            KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
         this.parcelaRepository = parcelaRepository;
         this.estrategiasPagamento = estrategiasPagamento;
         this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Parcela processarPagamento(Long parcelaId, String formaPagamento) {
-        String transactionId = "TX-" + parcelaId; // ID para rastreamento da transação
+        String transactionId = "TX-" + parcelaId;
         logger.info("[{}] Iniciando pagamento para a parcela ID: {}, Forma de pagamento: {}", transactionId, parcelaId, formaPagamento);
 
         Parcela parcela = parcelaRepository.findById(parcelaId)
                 .orElseThrow(() -> {
                     logger.error("[{}] Parcela não encontrada para o ID: {}", transactionId, parcelaId);
-                    return new RuntimeException("Parcela não encontrada");
+                    return new IllegalArgumentException("Parcela não encontrada");
                 });
 
-        if (!"PENDENTE".equalsIgnoreCase(parcela.getSituacao())) {
-            logger.warn("[{}] Parcela já foi paga ou está inválida. ID: {}, Situação atual: {}", transactionId, parcelaId, parcela.getSituacao());
-            throw new RuntimeException("Parcela já foi paga ou está inválida");
-        }
+        ParcelaValidator.validarParcela(parcela);
 
         CalculoJuros calculoJuros = estrategiasPagamento.get(formaPagamento.toUpperCase());
         if (calculoJuros == null) {
             logger.error("[{}] Forma de pagamento inválida recebida: {}", transactionId, formaPagamento);
-            throw new RuntimeException("Forma de pagamento inválida");
+            throw new IllegalArgumentException("Forma de pagamento inválida");
         }
 
         BigDecimal juros = calculoJuros.calcularJuros(parcela);
@@ -53,8 +55,22 @@ public class PagamentoService {
         parcela.setDataPago(LocalDate.now());
         parcela.setSituacao("PAGO");
 
-        String mensagem = String.format("Pagamento da parcela %d concluído via %s", parcelaId, formaPagamento);
-        kafkaTemplate.send("pagamento_concluido", mensagem);
+        try {
+            String mensagemKafka = objectMapper.writeValueAsString(Map.of(
+                    "parcelaId", parcelaId,
+                    "formaPagamento", formaPagamento,
+                    "jurosAplicados", juros,
+                    "dataPagamento", parcela.getDataPago()
+            ));
+
+            if (mensagemKafka == null || mensagemKafka.isBlank()) {
+                throw new IllegalArgumentException("Mensagem não pode ser nula ao enviar para o Kafka.");
+            }
+
+            kafkaTemplate.send("pagamento_concluido", mensagemKafka);
+        } catch (Exception e) {
+            logger.error("[{}] Erro ao enviar mensagem Kafka: {}", transactionId, e.getMessage());
+        }
 
         parcela = parcelaRepository.save(parcela);
         logger.info("[{}] Pagamento concluído. Parcela ID: {}, Forma: {}, Juros aplicados: R${}", transactionId, parcelaId, formaPagamento, juros);
