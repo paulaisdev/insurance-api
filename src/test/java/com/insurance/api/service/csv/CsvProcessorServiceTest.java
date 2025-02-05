@@ -1,4 +1,4 @@
-package com.insurance.api.service;
+package com.insurance.api.service.csv;
 
 import com.insurance.api.messaging.CsvProducer;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;

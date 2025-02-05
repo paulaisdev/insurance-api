@@ -1,5 +1,6 @@
-import com.insurance.api.service.CsvImportService;
-import com.insurance.api.service.CsvProcessorService;
+package com.insurance.api.service.csv;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,19 +18,25 @@ import static org.mockito.Mockito.*;
 class CsvImportServiceTest {
 
     @Mock
-    private CsvProcessorService csvProcessorService;
+    private LinhaCsvProcessor linhaCsvProcessor;
 
     @InjectMocks
     private CsvImportService csvImportService;
 
+    private MultipartFile file;
+
+    @BeforeEach
+    void setUp() {
+        file = mock(MultipartFile.class);
+    }
+
     @Test
     void deveImportarCsvComSucesso() throws IOException {
-        MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream("cabecalho\ndado1,dado2,dado3,100.00".getBytes()));
 
         assertDoesNotThrow(() -> csvImportService.processarCsv(file));
-        verify(csvProcessorService, times(1)).processarCsv(file);
+        verify(linhaCsvProcessor, times(1)).processarLinhaCsv("dado1,dado2,dado3,100.00");
     }
 
     @Test
@@ -42,7 +49,6 @@ class CsvImportServiceTest {
 
     @Test
     void deveLancarErroAoImportarCsvVazio() {
-        MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(true);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> csvImportService.processarCsv(file));
