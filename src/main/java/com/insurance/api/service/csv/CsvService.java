@@ -1,4 +1,4 @@
-package com.insurance.api.service;
+package com.insurance.api.service.csv;
 
 import org.springframework.web.multipart.MultipartFile;
 
