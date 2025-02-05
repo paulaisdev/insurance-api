@@ -1,4 +1,4 @@
-package com.insurance.api.service;
+package com.insurance.api.service.csv;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,5 +37,9 @@ public class CsvImportService implements CsvService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar CSV", e);
         }
+    }
+
+    public void processarLinhaCsv(String linha) {
+        linhaCsvProcessor.processarLinhaCsv(linha);
     }
 }
